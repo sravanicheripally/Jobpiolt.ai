@@ -1,9 +1,3 @@
-{% extends 'base.html' %}
-{% block title %}Payment Checkout{% endblock %}
-{% block content %}
-
-<h2 style="text-align:center; margin-top:30px;">Subscribe to {{ plan.name }}</h2>
-
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
     var options = {
@@ -28,5 +22,3 @@
     var rzp = new Razorpay(options);
     rzp.open();
 </script>
-
-{% endblock %}

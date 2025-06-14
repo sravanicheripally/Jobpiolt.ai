@@ -5,8 +5,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import authenticate
 from .forms import SignUpForm, StudentProfileForm
-from .models import Plan
+from .models import Plan,JobApplier
 import razorpay
+from django.views.decorators.csrf import csrf_protect
 
 # Razorpay credentials
 RAZORPAY_KEY_ID='rzp_test_Anl5NixDMZZiL0'
@@ -24,16 +25,26 @@ def signup(request):
         form = SignUpForm()
     return render(request, 'signup.html', {'form': form})
 
+@csrf_protect
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('home')
+
+            # Check if user is a JobApplier
+            if hasattr(user, 'jobapplier'):
+                return redirect('job_applier_dashboard')
+            else:
+                return redirect('home')
     else:
         form = AuthenticationForm()
     return render(request, 'login.html', {'form': form})
+
+def job_applier_dashboard(request):
+    return render(request, 'job_applier_dashboard.html')
+
 
 def home(request):
     return render(request, 'home.html')

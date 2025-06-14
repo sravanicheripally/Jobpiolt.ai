@@ -13,7 +13,14 @@
         <div class="collapse navbar-collapse">
             <!-- Left Side Links -->
             <ul class="navbar-nav me-auto">
-                {% if user.is_authenticated %}
+               {% if user.is_authenticated %}
+                {% if user.jobapplier %}
+                    <!-- Job Applier Navbar -->
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'job_applier_dashboard' %}">Dashboard</a>
+                    </li>
+                {% else %}
+                    <!-- Normal User Navbar -->
                     <li class="nav-item">
                         <a class="nav-link text-white" href="{% url 'plans' %}">Plans</a>
                     </li>
@@ -21,6 +28,8 @@
                         <a class="nav-link text-white" href="{% url 'profile_form' %}">Profile</a>
                     </li>
                 {% endif %}
+            {% endif %}
+
             </ul>
 
             <!-- Right Side Links -->

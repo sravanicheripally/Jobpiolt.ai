@@ -19,3 +19,11 @@ class StudentProfile(models.Model):
     description = models.TextField()
     email = models.EmailField()
     plan = models.ForeignKey(Plan, on_delete=models.SET_NULL, null=True)
+
+class JobApplier(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    job_title = models.CharField(max_length=100)
+    company_name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.user.username
