@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}Subscription Plans{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background: #f4f8fb;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .pricing-section {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        flex-wrap: wrap;
+        padding: 60px 20px;
+    }
+
+    .plan-card {
+        position: relative;
+        background: white;
+        border-radius: 25px;
+        padding: 30px 20px;
+        width: 280px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        margin-right:4%;
+    }
+
+    .plan-label {
+        position: absolute;
+        top: 50%;
+        left: -40px;
+        transform: translateY(-50%) rotate(-90deg);
+        background: #ff4f72;
+        color: white;
+        font-weight: bold;
+        padding: 5px 12px;
+        border-radius: 10px;
+        font-size: 13px;
+    }
+
+    .plan-label.standard {
+        background: #2dd2a8;
+    }
+
+    .plan-label.pro {
+        background: #7145d6;
+    }
+
+    .plan-price {
+        font-size: 28px;
+        font-weight: bold;
+        color: #000;
+    }
+
+    .plan-duration {
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+
+    .plan-features {
+        list-style: none;
+        padding: 0;
+        margin-bottom: 25px;
+        font-size: 15px;
+    }
+
+    .plan-features li {
+        margin: 8px 0;
+    }
+
+    .plan-features li.disabled {
+        text-decoration: line-through;
+        color: #999;
+    }
+
+    .btn-buy {
+        background: #ff4f72;
+        border: none;
+        color: white;
+        font-weight: bold;
+        padding: 12px 20px;
+        border-radius: 30px;
+        width: 100%;
+        transition: background 0.3s;
+    }
+
+    .btn-buy.standard {
+        background: #2dd2a8;
+    }
+
+    .btn-buy.pro {
+        background: #7145d6;
+    }
+
+    .btn-buy:hover {
+        opacity: 0.9;
+    }
+
+    @media screen and (max-width: 768px) {
+        .plan-card {
+            width: 90%;
+        }
+
+        .plan-label {
+            left: -30px;
+        }
+    }
+</style>
+
+<div class="pricing-section">
+    {% for plan in plans %}
+    <div class="plan-card">
+        <div class="plan-label {{ plan.name|lower }}">{{ plan.name }}</div>
+        <div class="plan-price">${{ plan.price }}</div>
+        <div class="plan-duration">/month</div>
+        <ul class="plan-features">
+            <li>{{ plan.description }}</li>
+            <li>Basic features available</li>
+            <li class="disabled">Premium Support</li>
+            <li class="disabled">Custom Reports</li>
+        </ul>
+        <form action="{% url 'subscribe' plan.id %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn-buy {% if plan.name == 'STANDARD' %}standard{% elif plan.name == 'PRO' %}pro{% endif %}">
+                BUY NOW
+            </button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

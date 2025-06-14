@@ -1,0 +1,21 @@
+# Create your models here.
+from django.db import models
+from django.contrib.auth.models import User
+
+class Plan(models.Model):
+    name = models.CharField(max_length=100)
+    price = models.DecimalField(max_digits=6, decimal_places=2)
+    description = models.TextField()
+
+    def __str__(self):
+        return self.name
+
+class StudentProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    firstname = models.CharField(max_length=100)
+    lastname = models.CharField(max_length=100)
+    resume = models.FileField(upload_to='resumes/')
+    skills = models.CharField(max_length=200)
+    description = models.TextField()
+    email = models.EmailField()
+    plan = models.ForeignKey(Plan, on_delete=models.SET_NULL, null=True)
