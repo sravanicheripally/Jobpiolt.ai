@@ -19,6 +19,9 @@
                     <li class="nav-item">
                         <a class="nav-link text-white" href="{% url 'job_applier_dashboard' %}">Dashboard</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'upload_excel' %}">upload_excel</a>
+                    </li>
                 {% else %}
                     <!-- Normal User Navbar -->
                     <li class="nav-item">
@@ -26,6 +29,9 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-white" href="{% url 'profile_form' %}">Profile</a>
+                    </li>
+                     <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'filter_data' %}">View Jobs</a>
                     </li>
                 {% endif %}
             {% endif %}

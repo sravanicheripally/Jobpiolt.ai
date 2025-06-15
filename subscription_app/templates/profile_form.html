@@ -66,6 +66,13 @@
         <form method="POST" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
 
+            <!-- 🔼 Resume Field FIRST -->
+            <div class="mb-4">
+                <label for="id_resume" class="form-label">Upload Resume</label>
+                <input type="file" class="form-control" id="id_resume" name="resume">
+                {{ form.resume.errors }}
+            </div>
+
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label for="id_firstname" class="form-label">First Name</label>
@@ -100,12 +107,6 @@
                 <label for="id_description" class="form-label">Profile Summary</label>
                 <textarea class="form-control" id="id_description" name="description" rows="4">{{ form.description.value|default:'' }}</textarea>
                 {{ form.description.errors }}
-            </div>
-
-            <div class="mb-4">
-                <label for="id_resume" class="form-label">Upload Resume</label>
-                <input type="file" class="form-control" id="id_resume" name="resume">
-                {{ form.resume.errors }}
             </div>
 
             <div class="text-center">

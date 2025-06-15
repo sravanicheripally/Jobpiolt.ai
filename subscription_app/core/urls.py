@@ -12,5 +12,6 @@ urlpatterns = [
     path('subscribe/<int:plan_id>/', views.subscribe, name='subscribe'),
     path('profile-form/', views.profile_form, name='profile_form'),
     path('job_applier_dashboard/', job_applier_dashboard, name='job_applier_dashboard'),
-
+    path('upload_excel',views.upload_excel_view,name='upload_excel'),
+    path('filter_data',views.filter_data_view,name='filter_data')
 ]

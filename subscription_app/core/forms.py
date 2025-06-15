@@ -7,7 +7,11 @@ class SignUpForm(UserCreationForm):
     email = forms.EmailField()
     class Meta:
         model = User
-        fields = ('username', 'email', 'password')
+        fields = ('username', 'email', 'password1')
+        def __init__(self, *args, **kwargs):
+            super(SignUpForm, self).__init__(*args, **kwargs)
+            if 'password2' in self.fields:
+                del self.fields['password2']
 
 class StudentProfileForm(forms.ModelForm):
     class Meta:
