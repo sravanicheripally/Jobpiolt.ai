@@ -4,8 +4,8 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import authenticate
-from .forms import SignUpForm, StudentProfileForm
-from .models import Plan,JobApplier
+from .forms import SignUpForm, StudentProfileForm,AppliedJobForm
+from .models import Plan,JobApplier,AppliedJob,JobPosting
 import razorpay
 from django.views.decorators.csrf import csrf_protect
 import pandas as pd
@@ -15,8 +15,7 @@ from django.db import connections
 from django.shortcuts import render
 from django.contrib import messages
 from datetime import date, timedelta
-import pdfplumber
-import docx
+from datetime import timezone
 
 
 # Razorpay credentials
@@ -162,102 +161,71 @@ def profile_form(request):
     return render(request, 'profile_form.html', {'form': form})
 
 
-@login_required
-def upload_excel_view(request):
+@login_required(login_url='login')
+def applied_job_create(request):
     if request.method == 'POST':
-        file = request.FILES.get('file')
-
-        if not file:
-            messages.error(request, "Please upload a file.")
-            return render(request, 'upload_excel.html')
-
-        # Auto-generate table name from file name
-        filename = os.path.splitext(file.name)[0]
-        table_name = re.sub(r'\W+', '_', filename).lower()
-
-        # Read Excel file into DataFrame
-        df = pd.read_excel(file)
-
-        required_columns = {'username', 'email', 'company name', 'location', 'date'}
-        if not required_columns.issubset(df.columns):
-            messages.error(request, "Excel must contain: username, email, company name, location, date")
-            return render(request, 'upload.html')
-
-        # Insert data into MySQL
-        with connections['mysql_db'].cursor() as cursor:
-            cursor.execute(f"""
-                CREATE TABLE IF NOT EXISTS `{table_name}` (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    username VARCHAR(100),
-                    email VARCHAR(100),
-                    company_name VARCHAR(100),
-                    location VARCHAR(100),
-                    date DATE
-                )
-            """)
-
-            for _, row in df.iterrows():
-                try:
-                    date_value = (
-                        row['date'] if isinstance(row['date'], datetime)
-                        else datetime.strptime(str(row['date']), '%Y-%m-%d')
-                    )
-                except:
-                    continue  # skip invalid date
-
-                cursor.execute(f"""
-                    INSERT INTO `{table_name}` (username, email, company_name, location, date)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (
-                    row['username'],
-                    row['email'],
-                    row['company name'],
-                    row['location'],
-                    date_value
-                ))
-
-        messages.success(request, f"Data uploaded to table '{table_name}' successfully.")
-        return render(request, 'upload.html')
-
-    return render(request, 'upload.html')
-
-
-@login_required
-def filter_data_view(request):
-    results = []
-    selected_filter = request.GET.get('filter', 'day')
-    table_name = request.GET.get('table_name', 'user_data_200_records')  # default fallback
-
-    if not table_name:
-        return render(request, 'filter_data.html', {'records': [], 'selected_filter': selected_filter})
-
-    today = date.today()
-    params = []
-
-    if selected_filter == 'day':
-        query = f"SELECT * FROM `{table_name}` WHERE DATE(date) = %s"
-        params.append(today)
-
-    elif selected_filter == 'week':
-        start_of_week = today - timedelta(days=today.weekday())
-        end_of_week = today
-        query = f"SELECT * FROM `{table_name}` WHERE DATE(date) BETWEEN %s AND %s"
-        params.extend([start_of_week, end_of_week])
-
-    elif selected_filter == 'month':
-        query = f"SELECT * FROM `{table_name}` WHERE MONTH(date) = %s AND YEAR(date) = %s"
-        params.extend([today.month, today.year])
+        form = AppliedJobForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Applied job recorded successfully.')
+            return redirect('applied-job-create')  # or to a job list view
     else:
-        query = f"SELECT * FROM `{table_name}`"  # fallback
+        form = AppliedJobForm()
+    return render(request, 'job_form.html', {'form': form})
 
-    # 🛠 Use MySQL DB explicitly
-    with connections['mysql_db'].cursor() as cursor:
-        try:
-            cursor.execute(query, params)
-            columns = [col[0] for col in cursor.description]
-            rows = cursor.fetchall()
-            results = [dict(zip(columns, row)) for row in rows]
-        except Exception as e:
-            print("Error:", e)
 
-    return render(request, 'filter_data.html', {'records': results, 'selected_filter': selected_filter})
+@login_required(login_url='login')  # protect route
+def get_filtered_jobs(request):
+    user = request.user
+    filter_by = request.GET.get('filter', 'day')
+    today = date.today()
+
+    # default queryset
+    jobs = AppliedJob.objects.none()
+    today_count = week_count = month_count = 0
+
+    if filter_by == 'day':
+        jobs = AppliedJob.objects.filter(user=user, applied_date=today)
+    elif filter_by == 'week':
+        start_of_week = today - timedelta(days=today.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+        jobs = AppliedJob.objects.filter(user=user, applied_date__range=(start_of_week, end_of_week))
+    elif filter_by == 'month':
+        jobs = AppliedJob.objects.filter(user=user, applied_date__month=today.month, applied_date__year=today.year)
+
+    # counts for metrics
+    today_count = AppliedJob.objects.filter(user=user, applied_date=today).count()
+
+    start_of_week = today - timedelta(days=today.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
+    week_count = AppliedJob.objects.filter(user=user, applied_date__range=(start_of_week, end_of_week)).count()
+
+    month_count = AppliedJob.objects.filter(user=user, applied_date__month=today.month, applied_date__year=today.year).count()
+
+    # convert queryset to list of dicts for rendering
+    records = list(jobs.values('job_title', 'company', 'applied_date', 'job_link'))
+
+    return render(request, 'filtered_jobs.html', {
+        'records': records,
+        'selected_filter': filter_by,
+        'today_count': today_count,
+        'week_count': week_count,
+        'month_count': month_count
+    })
+    
+    
+def job_dashboard(request):
+    if not request.user.is_authenticated:
+        return redirect('login')  # or any other login route
+
+    try:
+        job_applier = JobApplier.objects.get(user=request.user)
+        user_technologies = job_applier.technologies.all()
+        matching_jobs = JobPosting.objects.filter(technologies__in=user_technologies).distinct()
+    except JobApplier.DoesNotExist:
+        matching_jobs = []
+
+    context = {
+        'matching_jobs': matching_jobs
+    }
+    return render(request, 'jobs_to_apply.html', context)

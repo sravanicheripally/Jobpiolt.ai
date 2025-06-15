@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import StudentProfile
+from .models import StudentProfile,AppliedJob
 
 class SignUpForm(UserCreationForm):
     email = forms.EmailField()
@@ -18,3 +18,17 @@ class StudentProfileForm(forms.ModelForm):
         model = StudentProfile
         fields = '__all__'
         exclude = ['user', 'plan']
+        
+        
+class AppliedJobForm(forms.ModelForm):
+    class Meta:
+        model = AppliedJob
+        fields = ['user',  'job_link', 'resume', 'applied_date']
+        widgets = {
+            'job_link': forms.URLInput(attrs={'class': 'form-control'}),
+            'resume': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'applied_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'user': forms.Select(attrs={'class': 'form-select'}),
+        }
+        
+        

@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
-from .views import job_applier_dashboard
+from .views import job_applier_dashboard,job_dashboard
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -12,6 +12,8 @@ urlpatterns = [
     path('subscribe/<int:plan_id>/', views.subscribe, name='subscribe'),
     path('profile-form/', views.profile_form, name='profile_form'),
     path('job_applier_dashboard/', job_applier_dashboard, name='job_applier_dashboard'),
-    path('upload_excel',views.upload_excel_view,name='upload_excel'),
-    path('filter_data',views.filter_data_view,name='filter_data')
+    path('applyJob/', views.applied_job_create, name='applied-job-create'),
+    path('filteredJobs/', views.get_filtered_jobs, name='filtered_jobs'),
+    path('dashboard/', job_dashboard, name='job_dashboard'),
+
 ]
